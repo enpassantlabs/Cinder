@@ -1,4 +1,6 @@
-#version 150
+//#version 150
+#version 310 es
+precision mediump float;
 
 #ifdef GL_ARB_gpu_shader5
 #extension GL_ARB_gpu_shader5 : enable

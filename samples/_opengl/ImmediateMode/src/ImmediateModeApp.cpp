@@ -8,8 +8,8 @@ using namespace std;
 
 class ImmediateModeApp : public App {
   public:
-	void setup();
-	void draw();
+	void setup() override;
+	void draw() override;
 
 	void mouseDown(  MouseEvent event ) override;
 

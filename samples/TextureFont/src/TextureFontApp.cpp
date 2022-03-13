@@ -20,20 +20,20 @@ class TextureFontApp : public App {
 	void keyDown( KeyEvent event ) override;
 	void draw() override;
 
-	Font				mFont;
+	ci::Font				mFont;
 	gl::TextureFontRef	mTextureFont;
 };
 
 void TextureFontApp::setup()
 {
 #if defined( CINDER_COCOA_TOUCH )
-	mFont = Font( "Cochin-Italic", 24 );
+	mFont = ci::Font( "Cochin-Italic", 24 );
 #elif defined( CINDER_COCOA )
-	mFont = Font( "BigCaslon-Medium", 24 );
+	mFont = ci::Font( "BigCaslon-Medium", 24 );
 #elif defined( CINDER_LINUX )
-	mFont = Font( "Times New Roman", 24 );
+	mFont = ci::Font( "Times New Roman", 24 );
 #else
-	mFont = Font( "Times New Roman", 48 );
+	mFont = ci::Font( "Times New Roman", 48 );
 #endif
 	mTextureFont = gl::TextureFont::create( mFont );
 }
@@ -43,11 +43,11 @@ void TextureFontApp::keyDown( KeyEvent event )
 	switch( event.getChar() ) {
 		case '=':
 		case '+':
-			mFont = Font( mFont.getName(), mFont.getSize() + 1 );
+			mFont = ci::Font( mFont.getName(), mFont.getSize() + 1 );
 			mTextureFont = gl::TextureFont::create( mFont );
 		break;
 		case '-':
-			mFont = Font( mFont.getName(), mFont.getSize() - 1 );
+			mFont = ci::Font( mFont.getName(), mFont.getSize() - 1 );
 			mTextureFont = gl::TextureFont::create( mFont );
 		break;
 	}
@@ -56,7 +56,7 @@ void TextureFontApp::keyDown( KeyEvent event )
 void TextureFontApp::mouseDown( MouseEvent event )
 {
 	while( true ) { // find the next random font with a letter 'a' in it
-		mFont = Font( Font::getNames()[Rand::randInt() % Font::getNames().size()], mFont.getSize() );
+		mFont = ci::Font( ci::Font::getNames()[Rand::randInt() % ci::Font::getNames().size()], mFont.getSize() );
 		if( mFont.getGlyphChar( 'a' ) == 0 )
 			continue;
 		console() << mFont.getName() << std::endl;

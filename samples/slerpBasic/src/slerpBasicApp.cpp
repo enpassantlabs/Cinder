@@ -77,10 +77,10 @@ void slerpBasicApp::draw()
 	gl::rotate( mSpinTheWholeWorld );
 
 	// draw the globe
-	gl::enableWireframe();
+	//gl::enableWireframe();
 	gl::color( ColorA( 1, 1, 0, 0.25f ) );
 	gl::drawSphere( vec3( 0 ), 1, 20 );
-	gl::disableWireframe();
+	//gl::disableWireframe();
 	
 	// draw the path
 	gl::color( Color::white() );

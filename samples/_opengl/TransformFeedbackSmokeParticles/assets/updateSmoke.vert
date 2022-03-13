@@ -1,4 +1,6 @@
-#version 150 core
+//#version 150 core
+#version 310 es
+precision mediump float;
 
 in vec3 VertexPosition;
 in vec3 VertexVelocity;

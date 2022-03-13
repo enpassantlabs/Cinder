@@ -23,7 +23,7 @@ class TriangulationApp : public App {
 	void		setRandomFont();
 	void		setRandomGlyph();
 	
-	Font				mFont;
+	ci::Font				mFont;
 	Shape2d				mShape;
 	vector<string>		mFontNames;
 	gl::VboMeshRef		mVboMesh;
@@ -39,8 +39,8 @@ void TriangulationApp::setup()
 {
 	ImGui::Initialize();
 	
-	mFontNames = Font::getNames();
-	mFont = Font( "Times", mFontSize );
+	mFontNames = ci::Font::getNames();
+	mFont = ci::Font( "Times", mFontSize );
 	mShape = mFont.getGlyphShape( mFont.getGlyphChar( 'A' ) );
 	
 	// load VBO
@@ -58,7 +58,7 @@ void TriangulationApp::recalcMesh()
 void TriangulationApp::setRandomFont()
 {
 	// select a random font from those available on the system
-	mFont = Font( mFontNames[rand() % mFontNames.size()], mFontSize );
+	mFont = ci::Font( mFontNames[rand() % mFontNames.size()], mFontSize );
 	setRandomGlyph();
 }
 
@@ -69,7 +69,7 @@ void TriangulationApp::setRandomGlyph()
 		mShape = mFont.getGlyphShape( glyphIndex );
 		recalcMesh();
 	}
-	catch( FontGlyphFailureExc &exc  ) {
+	catch( ci::FontGlyphFailureExc &exc  ) {
 		console() << "Looks like glyph " << glyphIndex << " doesn't exist in this font." << std::endl;
 	}
 }
@@ -99,10 +99,10 @@ void TriangulationApp::draw()
 		gl::color( Color( 0.8f, 0.4f, 0.0f ) );
 		gl::draw( mVboMesh );
 		if( mDrawWireframe ) {
-			gl::enableWireframe();
+			//gl::enableWireframe();
 			gl::color( Color::white() );
 			gl::draw( mVboMesh );
-			gl::disableWireframe();
+			//gl::disableWireframe();
 		}
 	gl::popModelView();
 }

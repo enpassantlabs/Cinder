@@ -46,14 +46,14 @@ class FrustumCullingReduxApp : public App {
 public:
 	static void prepareSettings( Settings *settings );
 
-	void setup();
-	void update();
-	void draw();
+	void setup() override;
+	void update() override;
+	void draw() override;
 
 	void toggleCullableFov();
 	void drawCullableFov();
 
-	void keyDown( KeyEvent event );
+	void keyDown( KeyEvent event ) override;
 
 	void resize() override;
 
@@ -398,7 +398,7 @@ void FrustumCullingReduxApp::loadObject()
 void FrustumCullingReduxApp::renderHelpToTexture()
 {
 	TextLayout layout;
-	layout.setFont( Font( "Arial", 18 ) );
+	layout.setFont( ci::Font( "Arial", 18 ) );
 	layout.setColor( ColorA( 1, 1, 1, 1 ) );
 	layout.setLeadingOffset( 3 );
 

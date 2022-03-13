@@ -70,10 +70,12 @@ void CameraPerspApp::setup()
 	setDefaultValues();
 	
 	gl::Fbo::Format format;
-	mObjectFbo	= gl::Fbo::create( FBO_WIDTH, FBO_HEIGHT, format.depthTexture() );
+	//mObjectFbo	= gl::Fbo::create( FBO_WIDTH, FBO_HEIGHT, format.depthTexture() );
+	mObjectFbo	= gl::Fbo::create( FBO_WIDTH, FBO_HEIGHT );
 	
 	try {
-		mCubeMap = gl::TextureCubeMap::create( loadImage( loadResource( RES_ENV_MAP ) ), gl::TextureCubeMap::Format().mipmap() );
+		//mCubeMap = gl::TextureCubeMap::create( loadImage( loadResource( RES_ENV_MAP ) ), gl::TextureCubeMap::Format().mipmap() );
+		mCubeMap = gl::TextureCubeMap::create( loadImage( "/home/pi/dev/Cinder/samples/data/environment_maps/humus_sf.jpg" ), gl::TextureCubeMap::Format().mipmap() );
 		mObjectGlsl = gl::GlslProg::create( loadAsset( "objectshader.vert" ), loadAsset( "objectshader.frag" ) );
 	} catch ( std::exception& e ) {
 		console() << e.what() << endl;

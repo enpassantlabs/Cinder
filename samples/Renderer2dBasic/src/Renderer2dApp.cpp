@@ -7,7 +7,7 @@
 	#include "cinder/msw/CinderMswGdiplus.h"
 #endif
 
-#include "Resources.h"
+//#include "Resources.h"
 
 using namespace ci;
 using namespace ci::app;

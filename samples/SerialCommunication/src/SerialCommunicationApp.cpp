@@ -110,7 +110,7 @@ void SerialCommunicationApp::update()
 		console() << "last string: " << mLastString << endl;
 		
 		TextLayout simple;
-		simple.setFont( Font( "Arial Black", 24 ) );
+		simple.setFont( ci::Font( "Arial Black", 24 ) );
 		simple.setColor( Color( .7, .7, .2 ) );
 		simple.addLine( mLastString );
 		simple.setLeadingOffset( 0 );

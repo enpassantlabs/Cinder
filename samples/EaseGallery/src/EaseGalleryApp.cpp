@@ -22,11 +22,11 @@ struct EaseBox {
 		text.clear( Color::white() );
 		text.setColor( Color(0.5f, 0.5f, 0.5f) );
 		try {
-			text.setFont( Font( "Futura-CondensedMedium", 18 ) );
+			text.setFont( ci::Font( "Futura-CondensedMedium", 18 ) );
 		}
 		catch( ci::Exception &exc ) {
 			CI_LOG_W( "failed to load specified font, what: " << exc.what() );
-			text.setFont( Font( "Arial", 18 ) );
+			text.setFont( ci::Font( "Arial", 18 ) );
 		}
 		text.addLine( name );
 		mLabelTex = gl::Texture::create( text.render( true ) );

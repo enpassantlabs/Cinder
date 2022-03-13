@@ -2,7 +2,12 @@
 // https://code.google.com/p/rdex-fluxus/source/browse/trunk/reactiondiffusion.frag
 
 
-#version 150
+//#version 150
+
+#version 310 es
+
+precision mediump float;
+
 #define KERNEL_SIZE 9
 
 float kernel[KERNEL_SIZE];

@@ -120,7 +120,7 @@ private:
 
 	Color					mColorBackground;
 
-	Font					mFont;
+	ci::Font					mFont;
 };
 
 void StereoscopicRenderingApp::prepareSettings( Settings *settings )
@@ -199,7 +199,7 @@ void StereoscopicRenderingApp::setup()
 
 	mColorBackground = Color( 0.8f, 0.8f, 0.8f );
 
-	mFont = Font( "Verdana", 24.0f );
+	mFont = ci::Font( "Verdana", 24.0f );
 	mDrawUI = true;
 }
 

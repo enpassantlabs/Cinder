@@ -27,18 +27,18 @@ Quake::Quake( float aLat, float aLong, float aMag, const string &aTitle )
 	TextLayout layout;
 
 	if( mMag > 5.5 ) {
-		layout.setFont( Font( "HelveticaNeue-Bold", mMag * mMag + 26.0f ) );
+		layout.setFont( ci::Font( "HelveticaNeue-Bold", mMag * mMag + 26.0f ) );
 		layout.setColor( Color( 1, 0, 0 ) );
 	}
 	else {
-		layout.setFont( Font( "HelveticaNeue-Bold", mMag * mMag + 10.0f ) );
+		layout.setFont( ci::Font( "HelveticaNeue-Bold", mMag * mMag + 10.0f ) );
 		layout.setColor( Color( 1, 1, 1 ) );
 	}
 	layout.addCenteredLine( magnitudeStr );
 
 	if( mMag > 5.5 ) {
 		layout.setLeadingOffset( -10 );
-		layout.setFont( Font( "HelveticaNeue", mMag + 16 ) );
+		layout.setFont( ci::Font( "HelveticaNeue", mMag + 16 ) );
 		layout.setColor( Color( 1, 1, 1 ) );
 		layout.addCenteredLine( mTitle );
 	}

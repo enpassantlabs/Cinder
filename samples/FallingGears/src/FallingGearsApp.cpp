@@ -218,7 +218,7 @@ void FallingGearsApp::drawInfo()
 	gl::ScopedBlendAlpha blendScope;
 
 	TextLayout layout;
-	layout.setFont( Font( "Arial", 14 ) );
+	layout.setFont( ci::Font( "Arial", 14 ) );
 	layout.setColor( Color( 1, 1, 0 ) );
 
 	layout.addLine( string( "gears: " + to_string( mScene.getGears().size() ) ) );

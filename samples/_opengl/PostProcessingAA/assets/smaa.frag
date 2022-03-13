@@ -1,4 +1,6 @@
-#version 150
+//#version 150
+#version 310 es
+precision mediump float;
 
 // Pass in the render target metrics as a uniform
 uniform vec4 SMAA_RT_METRICS; // (1/w, 1/h, w, h)

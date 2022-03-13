@@ -248,7 +248,7 @@ void TransformFeedbackSmokeParticlesApp::draw()
 	gl::ScopedVao			vaoScope( mPVao[1-mDrawBuff] );
 	gl::ScopedGlslProg		glslScope( mPRenderGlsl );
 	gl::ScopedTextureBind	texScope( mSmokeTexture );
-	gl::ScopedState			stateScope( GL_PROGRAM_POINT_SIZE, true );
+	//gl::ScopedState			stateScope( GL_PROGRAM_POINT_SIZE, true );
 	gl::ScopedBlend			blendScope( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	
 	gl::pushMatrices();

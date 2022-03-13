@@ -1,4 +1,7 @@
-#version 150 core
+#version 310 es
+//#version 150 core
+
+precision mediump float;
 
 uniform mat4	ciModelViewProjection;
 uniform mat3	ciNormalMatrix;

@@ -2,7 +2,7 @@
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 #include "cinder/Camera.h"
-#include "cinder/MotionManager.h"
+//#include "cinder/MotionManager.h"
 #include "cinder/Utilities.h"
 #include "cinder/Log.h"
 
@@ -39,12 +39,12 @@ class CompassApp : public App {
 
 void CompassApp::setup()
 {
-	getSignalSupportedOrientations().connect( [] { return InterfaceOrientation::All; } );
+//	getSignalSupportedOrientations().connect( [] { return InterfaceOrientation::All; } );
 
-	if( ! MotionManager::isNorthReliable() )
-		CI_LOG_W( "North is not dependable on your device." );
+//	if( ! MotionManager::isNorthReliable() )
+//		CI_LOG_W( "North is not dependable on your device." );
 
-    MotionManager::enable( 60.0f );
+//	MotionManager::enable( 60.0f );
 
 	mCam.setEyePoint( vec3( 0 ) );
 
@@ -76,7 +76,7 @@ void CompassApp::resize()
 
 void CompassApp::update()
 {
-	mCam.setOrientation( MotionManager::getRotation( getOrientation() ) );
+//	mCam.setOrientation( MotionManager::getRotation( getOrientation() ) );
 }
 
 void CompassApp::draw()
@@ -131,7 +131,7 @@ void CompassApp::drawCardinalTex( char d, const vec3 &location, const vec3 &loca
 void CompassApp::drawFps()
 {
 	gl::enableAlphaBlending();
-	gl::drawStringRight( toString( floor(getAverageFps()) ) + " fps", vec2( getWindowWidth(), 40.0f), Color( 0, 0, 1 ), Font( "Helvetica", 30 ) );
+	gl::drawStringRight( toString( floor(getAverageFps()) ) + " fps", vec2( getWindowWidth(), 40.0f), Color( 0, 0, 1 ), ci::Font( "Helvetica", 30 ) );
 	gl::disableAlphaBlending();
 }
 

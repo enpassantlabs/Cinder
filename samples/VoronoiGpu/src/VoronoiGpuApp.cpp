@@ -87,7 +87,7 @@ void VoronoiGpuApp::draw()
 		gl::drawSolidCircle( toPoints( vec2( *ptIt ) ), 2.0f );
 	
 	gl::enableAlphaBlending();
-	gl::drawStringRight( "Click to add a point", vec2( getWindowWidth() - toPixels( 10 ), getWindowHeight() - toPixels( 20 ) ), Color( 1, 0.3, 0 ), Font( "Arial", toPixels( 12 ) ) );
+	gl::drawStringRight( "Click to add a point", vec2( getWindowWidth() - toPixels( 10 ), getWindowHeight() - toPixels( 20 ) ), Color( 1, 0.3, 0 ), ci::Font( "Arial", toPixels( 12 ) ) );
 	gl::disableAlphaBlending();
 }
 

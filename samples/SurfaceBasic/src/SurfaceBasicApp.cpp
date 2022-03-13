@@ -99,7 +99,8 @@ Surface processImage( const Surface input )
 
 void SurfaceBasicApp::setup()
 {
-	Surface processedImage( processImage( loadImage( loadResource( RES_IMAGE ) ) ) );
+	//Surface processedImage( processImage( loadImage( loadResource( RES_IMAGE ) ) ) );
+	Surface processedImage( processImage( loadImage( "/home/pi/dev/Cinder/samples/data/cinder_logo.png" ) ) );
 	mProcessedImageTex = gl::Texture2d::create( processedImage );
 }
 

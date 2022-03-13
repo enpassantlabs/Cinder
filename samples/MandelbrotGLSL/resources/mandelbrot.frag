@@ -1,4 +1,7 @@
-#version 150
+//#version 150
+#version 310 es
+
+precision mediump float;
 
 // Sets the maximum number of iterations per pixel.
 // Note: anything above 256 is a waste of energy,
@@ -7,8 +10,10 @@ const int kIterations = 256;
 
 uniform sampler2D uTex0;
 uniform vec2      uCenter;
-uniform float     uAspectRatio = 1.33333;
-uniform float     uScale = 1.0;
+//uniform float     uAspectRatio = 1.33333;
+//uniform float     uScale = 1.0;
+uniform float     uAspectRatio;
+uniform float     uScale;
 
 in vec2 vertTexCoord0;
 

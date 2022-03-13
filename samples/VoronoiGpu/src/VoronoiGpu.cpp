@@ -14,7 +14,9 @@
 using namespace std;
 using namespace ci;
 
-const char *vertexShaderGlsl = CI_GLSL( 150,
+//const char *vertexShaderGlsl = CI_GLSL( 150,
+const char *vertexShaderGlsl = CI_GLSL( 310 es,
+	precision mediump float;
 	uniform mat4 ciModelViewProjection;
 	in vec4 ciPosition;
 	in vec2 ciTexCoord0;
@@ -27,8 +29,11 @@ const char *vertexShaderGlsl = CI_GLSL( 150,
 	}
 );
 
-const char *voronoiShaderGlsl = CI_GLSL( 150,
-	uniform sampler2DRect	uTex0;
+//const char *voronoiShaderGlsl = CI_GLSL( 150,
+const char *voronoiShaderGlsl = CI_GLSL( 310 es,
+	//uniform sampler2DRect	uTex0;\n
+	precision mediump float;
+	uniform sampler2D	uTex0;
 	uniform vec2			uSampleScale;
 	in vec2 TexCoord0;
 	out vec3 oColor;
@@ -60,8 +65,11 @@ const char *voronoiShaderGlsl = CI_GLSL( 150,
 	}
 );
 	
-const char *distanceShaderGlsl = CI_GLSL( 150,
-	uniform sampler2DRect uTex0;
+//const char *distanceShaderGlsl = CI_GLSL( 150,
+const char *distanceShaderGlsl = CI_GLSL( 310 es,
+	//uniform sampler2DRect uTex0;\n
+	precision mediump float;
+	uniform sampler2D uTex0;
 	in vec2 TexCoord0;
 	out vec3 oColor;
 	
@@ -80,7 +88,8 @@ gl::TextureRef encodePoints( const vector<ivec2> &points, int width, int height 
 		result.setPixel( bottomUpPoint, Color( bottomUpPoint.x, bottomUpPoint.y, 0 ) );
 	}
 	
-	return gl::Texture::create( result, gl::Texture::Format().target( GL_TEXTURE_RECTANGLE_ARB ) );
+	//return gl::Texture::create( result, gl::Texture::Format().target( GL_TEXTURE_RECTANGLE_ARB ) );
+	return gl::Texture::create( result );
 }
 
 ci::Surface32f calcDiscreteVoronoiGpu( const std::vector<ci::ivec2> &points, int width, int height )
@@ -89,7 +98,8 @@ ci::Surface32f calcDiscreteVoronoiGpu( const std::vector<ci::ivec2> &points, int
 	
 	// allocate the FBOs
 	gl::Fbo::Format format;
-	format.setColorTextureFormat( gl::Texture::Format().target( GL_TEXTURE_RECTANGLE_ARB ).minFilter( GL_NEAREST ).
+	//format.setColorTextureFormat( gl::Texture::Format().target( GL_TEXTURE_RECTANGLE_ARB ).minFilter( GL_NEAREST ).
+	format.setColorTextureFormat( gl::Texture::Format().minFilter( GL_NEAREST ).
 		magFilter( GL_NEAREST ).internalFormat( GL_RGB32F ).wrap( GL_CLAMP_TO_EDGE ) );
 	gl::FboRef fbo[2];
 	fbo[0] = gl::Fbo::create( width, height, format );
@@ -126,7 +136,8 @@ ci::Channel32f calcDistanceMapGpu( const vector<ivec2> &points, int width, int h
 	
 	// allocate the FBOs
 	gl::Fbo::Format format;
-	format.setColorTextureFormat( gl::Texture::Format().target( GL_TEXTURE_RECTANGLE_ARB ).minFilter( GL_NEAREST ).
+	//format.setColorTextureFormat( gl::Texture::Format().target( GL_TEXTURE_RECTANGLE_ARB ).minFilter( GL_NEAREST ).
+	format.setColorTextureFormat( gl::Texture::Format().minFilter( GL_NEAREST ).
 		magFilter( GL_NEAREST ).internalFormat( GL_RGB32F ).wrap( GL_CLAMP_TO_EDGE ) );
 	gl::FboRef fbo[2];
 	fbo[0] = gl::Fbo::create( width, height, format );

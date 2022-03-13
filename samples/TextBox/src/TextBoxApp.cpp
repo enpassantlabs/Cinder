@@ -24,7 +24,7 @@ class TextBoxApp : public App {
 	string				mText;
 	gl::TextureRef		mTextTexture;
 	vec2				mSize;
-	Font				mFont;
+	ci::Font				mFont;
 };
 
 void TextBoxApp::setup()
@@ -32,9 +32,9 @@ void TextBoxApp::setup()
 	mText = "Here is some text that is larger than can fit naturally inside of 100 pixels.\nHere are some unicode code points: \303\251\303\241\303\250\303\240\303\247";
 
 #if defined( CINDER_COCOA )
-	mFont = Font( "Cochin-Italic", 32 );
+	mFont = ci::Font( "Cochin-Italic", 32 );
 #else
-	mFont = Font( "Times New Roman", 24 );
+	mFont = ci::Font( "Times New Roman", 24 );
 #endif
 	mSize = vec2( 100, 100 );
 	render();

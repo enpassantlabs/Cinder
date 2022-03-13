@@ -1,4 +1,6 @@
-#version 150
+//#version 150
+#version 310 es
+precision mediump float;
 #extension all : warn
 
 uniform sampler2D ParticleTex;

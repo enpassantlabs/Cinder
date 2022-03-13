@@ -219,10 +219,10 @@ void TubularApp::draw()
 
 	gl::disableAlphaBlending();
 	if( mWireframe && mTubeMesh->getNumTriangles() ) {
-		gl::enableWireframe();
+		//gl::enableWireframe();
 		gl::color( Color( 0.2f, 0.2f, 0.5f ) );
 		gl::draw( *mTubeMesh );
-		gl::disableWireframe();
+		//gl::disableWireframe();
 	}
 	
 	gl::enableAdditiveBlending();

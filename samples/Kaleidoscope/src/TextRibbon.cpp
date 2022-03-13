@@ -24,8 +24,8 @@ using namespace ci::app;
 TextRibbon::TextRibbon()
 	: mCol(Color::black()), mTextCol(Color::white())
 {
-	mUserFont = Font( loadResource( RES_OPEN_SANS ), 16 );
-	mTagFont = Font( loadResource( RES_KREON_BOLD ), 16 );
+	mUserFont = ci::Font( loadResource( RES_OPEN_SANS ), 16 );
+	mTagFont = ci::Font( loadResource( RES_KREON_BOLD ), 16 );
 }
 
 void TextRibbon::update( string tag, string user )

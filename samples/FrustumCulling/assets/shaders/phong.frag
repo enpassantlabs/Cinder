@@ -1,4 +1,7 @@
-#version 150
+#version 310 es
+//#version 150
+
+precision mediump float;
 
 in vec4	vertPosition;
 in vec3	vertNormal;

@@ -21,7 +21,7 @@ class DynamicCubeMappingApp : public App {
 
 	void drawSatellites();
 	void drawSkyBox();
-	void draw();
+	void draw() override;
 
 	gl::TextureCubeMapRef	mSkyBoxCubeMap;
 	gl::BatchRef			mTeapotBatch, mSkyBoxBatch;

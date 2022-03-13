@@ -116,7 +116,8 @@ DeferredShadingApp::DeferredShadingApp()
 	// Create shadow map buffer
 	{
 		const GLsizei sz = 2048;
-		mFboShadowMap = gl::Fbo::create( sz, sz, gl::Fbo::Format().depthTexture() );
+		//mFboShadowMap = gl::Fbo::create( sz, sz, gl::Fbo::Format().depthTexture() );
+mFboShadowMap = gl::Fbo::create( sz, sz );
 		const gl::ScopedFramebuffer scopedFramebuffer( mFboShadowMap );
 		const gl::ScopedViewport scopedViewport( ivec2( 0 ), mFboShadowMap->getSize() );
 		gl::clear();
@@ -518,15 +519,15 @@ void DeferredShadingApp::keyDown( KeyEvent event )
 	if( event.getCode() == KeyEvent::KEY_d ) {
 		mDebugMode = !mDebugMode;
 	}
-	else if( event.getCode() == KeyEvent::KEY_f ) {
-		mFullScreen = !mFullScreen;
-	}
+//	else if( event.getCode() == KeyEvent::KEY_f ) {
+//		mFullScreen = !mFullScreen;
+//	}
 	else if( event.getCode() == KeyEvent::KEY_l ) {
 		loadShaders();
 	}
-	else if( event.getCode() == KeyEvent::KEY_SPACE ) {
-		screenShot();
-	}
+//	else if( event.getCode() == KeyEvent::KEY_SPACE ) {
+//		screenShot();
+//	}
 	else if( event.getCode() == KeyEvent::KEY_q ) {
 		quit();
 	}

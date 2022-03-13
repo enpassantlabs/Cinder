@@ -35,7 +35,8 @@ void ArcballDemoApp::setup()
 
 	mEarthSphere = Sphere( vec3( 0 ), 1 );
 	mEarth = gl::Batch::create( geom::Sphere( mEarthSphere ).subdivisions( 50 ), gl::getStockShader( gl::ShaderDef().texture() ) );
-	mEarthTex = gl::Texture::create( loadImage( loadResource( EARTH_TEX_RES ) ) );
+	//mEarthTex = gl::Texture::create( loadImage( loadResource( EARTH_TEX_RES ) ) );
+	mEarthTex = gl::Texture::create( loadImage( "/home/pi/dev/Cinder/samples/data/earth.jpg" ));
 
 	mArcball = Arcball( &mCamera, mEarthSphere );
 }

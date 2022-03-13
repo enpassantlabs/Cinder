@@ -1,4 +1,7 @@
-#version 150
+//#version 150
+#version 310 es
+
+precision mediump float;
 
 uniform mat4	ciModelViewProjection;
 uniform mat4	ciModelView;

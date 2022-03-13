@@ -22,13 +22,13 @@ class TextTestApp : public App {
 	void draw();
 
 	gl::Texture2dRef	mTexture, mSimpleTexture;
-	Font 	mTestFont;
+	ci::Font 	mTestFont;
 };
 
 void printFontNames()
 {
 
-	for( vector<string>::const_iterator fontName = Font::getNames().begin(); fontName != Font::getNames().end(); ++fontName )
+	for( vector<string>::const_iterator fontName = ci::Font::getNames().begin(); fontName != ci::Font::getNames().end(); ++fontName )
 		console() << *fontName << endl;
 }
 
@@ -60,20 +60,20 @@ void TextTestApp::setup()
 		// this does a complicated layout
 		TextLayout layout;
 		layout.clear( ColorA( 0.2f, 0.2f, 0.2f, 0.2f ) );
-		layout.setFont( Font( normalFont, 24 ) );
+		layout.setFont( ci::Font( normalFont, 24 ) );
 		layout.setColor( Color( 1, 1, 1 ) );
 		layout.addLine( std::string( "Unicode: " ) + (const char*)japanese );
 		layout.setColor( Color( 0.5f, 0.25f, 0.8f ) );
-		layout.setFont( Font( boldFont, 12 ) );
+		layout.setFont( ci::Font( boldFont, 12 ) );
 		layout.addRightLine( "Now is the time" );
-		layout.setFont( Font( normalFont, 22 ) );
+		layout.setFont( ci::Font( normalFont, 22 ) );
 		layout.setColor( Color( 0.75f, 0.25f, 0.6f ) );
 		layout.append( " for all good men" );
 		layout.addCenteredLine( "center justified" );
 		layout.addRightLine( "right justified" );
-		layout.setFont( Font( differentFont, 24 ) );
+		layout.setFont( ci::Font( differentFont, 24 ) );
 		layout.addCenteredLine( "A different font" );
-		layout.setFont( Font( normalFont, 22 ) );
+		layout.setFont( ci::Font( normalFont, 22 ) );
 		layout.setColor( Color( 1.0f, 0.5f, 0.25f ) );
 		layout.addLine( " • Point 1 " );
 		layout.setLeadingOffset( -10 );
@@ -90,7 +90,7 @@ void TextTestApp::setup()
 
 	try {
 		// Create a custom font by loading it from a resource
-		Font customFont( loadResource( RES_CUSTOM_FONT ), 72 );
+		ci::Font customFont( loadResource( RES_CUSTOM_FONT ), 72 );
 		console() << "This font is called " << customFont.getFullName() << std::endl;
 
 		TextLayout simple;

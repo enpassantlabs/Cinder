@@ -7,7 +7,7 @@
 #include "cinder/gl/gl.h"
 #include "cinder/Rand.h"
 #include "Swatch.h"
-#include <boost/foreach.hpp>
+//#include <boost/foreach.hpp>
 
 using namespace ci;
 using namespace std;

@@ -1,5 +1,5 @@
 #include "cinder/app/App.h"
-//#include "cinder/cairo/Cairo.h"
+#include "cinder/cairo/Cairo.h"
 #include "cinder/Perlin.h"
 #include "cinder/Rand.h"
 
@@ -19,7 +19,7 @@ class perlinTestApp : public App {
 
 	void		renderNoise();
 
-//	cairo::SurfaceImage		*mNoiseSurface;
+	cairo::SurfaceImage		*mNoiseSurface;
 	int						mSeed;
 	int						mOctaves;
 	float					mTime;
@@ -62,7 +62,7 @@ void perlinTestApp::setup()
 	mFrequency = 1 / 200.0f;
 	mDrawNormalized = false;
 	mPaused = false;
-	mDrawLines = true;
+	mDrawLines = false; // true;
 	
 	mGradientPos = vec2( getWindowWidth(), getWindowHeight() ) / 2.0f;
 
@@ -130,7 +130,7 @@ void perlinTestApp::update()
 
 void perlinTestApp::draw()
 {
-//	cairo::Context ctx( cairo::createWindowSurface() );
+	cairo::Context ctx( cairo::createWindowSurface() );
 	ctx.copySurface( *mNoiseSurface, mNoiseSurface->getBounds() );
 
 	// draw the gradient

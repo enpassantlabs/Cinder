@@ -199,8 +199,8 @@
     <ResourceCompile Include="Resources.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\resources\brot_frag.glsl" />
-    <None Include="..\resources\passThru_vert.glsl" />
+    <None Include="..\resources\mandelbrot.frag" />
+    <None Include="..\resources\mandelbrot.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

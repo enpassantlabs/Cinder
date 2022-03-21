@@ -204,6 +204,16 @@
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\assets\normals_shader.frag" />
+    <None Include="..\assets\normals_shader.vert" />
+    <None Include="..\assets\normals_shader_es3.frag" />
+    <None Include="..\assets\normals_shader_es3.vert" />
+    <None Include="..\assets\shader.frag" />
+    <None Include="..\assets\shader.vert" />
+    <None Include="..\assets\shader_es3.frag" />
+    <None Include="..\assets\shader_es3.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

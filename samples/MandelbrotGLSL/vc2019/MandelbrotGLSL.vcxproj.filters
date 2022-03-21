@@ -33,10 +33,10 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\resources\brot_frag.glsl">
+    <None Include="..\resources\mandelbrot.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\resources\passThru_vert.glsl">
+    <None Include="..\resources\mandelbrot.vert">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -12,6 +12,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="assets">
+      <UniqueIdentifier>{4c04fd9d-ace3-45e7-acbb-0cf22cfde2bd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\SuperformulaGPUApp.cpp">
@@ -33,5 +36,31 @@
     <ResourceCompile Include="Resources.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\assets\shader_es3.vert">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="..\assets\normals_shader.frag">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="..\assets\normals_shader.vert">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="..\assets\normals_shader_es3.frag">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="..\assets\normals_shader_es3.vert">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="..\assets\shader.frag">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="..\assets\shader.vert">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="..\assets\shader_es3.frag">
+      <Filter>assets</Filter>
+    </None>
   </ItemGroup>
 </Project>

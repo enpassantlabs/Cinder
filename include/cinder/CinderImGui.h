@@ -29,9 +29,11 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_stdlib.h"
 
+#include "cinder/Color.h"
 #include "cinder/Filesystem.h"
 #include "cinder/CinderGlm.h"
 #include "cinder/Noncopyable.h"
+#include "cinder/Log.h"
 
 #include <vector>
 
@@ -77,6 +79,16 @@ namespace ImGui {
 		//! Returns whether the gamepad input is enabled
 		bool isGamepadEnabled() const { return mGamepadEnabled; }
 
+		//! Enables viewports. Allows imgui windows to be dragged outside of the main window. Default to false.
+		Options& enableViewports(bool enable);
+		//! Returns whether viewports is enabled
+		bool isViewportsEnabled() const { return mViewportsEnabled; }
+
+		//! Enables docking. Default to true.
+		Options& enableDocking(bool enable);
+		//! Returns whether docking is enabled
+		bool isDockingEnabled() const { return mDockingEnabled; }
+
 		//! Sets the signal priority that will be use to connect the signals and render ImGui
 		Options& signalPriority( int signalPriority );
 		//! Returns the signal priority that will be use to connect the signals and render ImGui
@@ -86,10 +98,13 @@ namespace ImGui {
 		Options& style( const ImGuiStyle& style );
 		//! Returns the ImGuiStyle used during initialization.
 		const ImGuiStyle& getStyle() const { return mStyle; }
+
 	protected:
 		bool							mAutoRender;
 		bool							mKeyboardEnabled;
 		bool							mGamepadEnabled;
+		bool							mViewportsEnabled;
+		bool							mDockingEnabled;
 		ImGuiStyle						mStyle;
 		ci::app::WindowRef				mWindow;
 		ci::fs::path					mIniPath;
@@ -101,6 +116,10 @@ namespace ImGui {
 	//! In a multi-window context, only call ImGui in App::draw() if the active window matches the one
 	//! used here for initialization, or in App::update() only if the this window is still open.
 	CI_API bool Initialize( const Options& options = Options() );
+
+	// you should never have to call this - however
+	// currently you need to call it after ci::app::getOpenFilePath()/ci::app::getSaveFilePath()
+	CI_API void NewFrameGuard();
 
 	CI_API bool DragFloat2( const char* label, glm::vec2* v2, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", float power = 1.0f );
 	CI_API bool DragFloat3( const char* label, glm::vec3* v2, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", float power = 1.0f );
@@ -131,11 +150,24 @@ namespace ImGui {
 	CI_API bool Combo( const char* label, int* currIndex, const std::vector<std::string>& values, ImGuiComboFlags flags = 0 );
 	CI_API bool ListBox( const char* label, int* currIndex, const std::vector<std::string>& values, int height_in_items = -1 );
 
-	CI_API void	Image( const ci::gl::Texture2dRef& texture, const ci::vec2& size, const ci::vec2& uv0 = ci::vec2( 0, 0 ), const ci::vec2& uv1 = ci::vec2( 1, 1 ), const ci::vec4& tint_col = ci::vec4( 1, 1, 1, 1 ), const ci::vec4& border_col = ci::vec4( 0, 0, 0, 0 ) );
+	CI_API void	Image( const ci::gl::Texture2dRef& texture, const glm::vec2& size, const glm::vec2& uv0 = glm::vec2( 0, 0 ), const glm::vec2& uv1 = glm::vec2( 1, 1 ), const glm::vec4& tint_col = glm::vec4( 1, 1, 1, 1 ), const glm::vec4& border_col = glm::vec4( 0, 0, 0, 0 ) );
 
+	CI_API void PopupModal( const char* label, const char* message, std::function<void()> confirmFn, std::function<void()> cancelFn = nullptr, const char* confirmLabel = "OK", const char* cancelLabel = "Cancel" );
+
+	/*
+	*	ImGui::ScopedWindow scpWindow("Window");
+	*	if (scpWindow.begin()) {
+	*		// 
+	*	}
+	*/
 	struct CI_API ScopedWindow : public ci::Noncopyable {
-		ScopedWindow( const char* label );
+		ScopedWindow(const char* label, ImGuiWindowFlags flags = ImGuiWindowFlags_None, bool *open = (bool *)0);
 		~ScopedWindow();
+		//! Returns true when window is visible
+		explicit operator bool() const { return mOpened; }
+
+	protected:
+		bool mOpened;
 	};
 
 	struct CI_API ScopedGroup : public ci::Noncopyable {
@@ -152,6 +184,15 @@ namespace ImGui {
 		bool mOpened;
 	};
 
+	struct CI_API ScopedCollapsingHeader : public ci::Noncopyable {
+		ScopedCollapsingHeader(const std::string& name, ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None);
+		~ScopedCollapsingHeader();
+		//! Returns true when header node is not collapsed
+		explicit operator bool() const { return mOpened; }
+	protected:
+		bool mOpened;
+	};
+
 	struct CI_API ScopedId : public ci::Noncopyable {
 		ScopedId( int int_id );
 		ScopedId( const char* label );
@@ -160,15 +201,20 @@ namespace ImGui {
 	};
 
 	struct CI_API ScopedMenuBar : public ci::Noncopyable {
-		ScopedMenuBar();
+		ScopedMenuBar(bool isMainMenu = false);
 		~ScopedMenuBar();
+		//! Returns true when menu bar is opened
+		explicit operator bool() const { return mOpened; }
 	protected:
 		bool mOpened;
+		bool mIsMainMenu;
 	};
 
-	struct CI_API ScopedMainMenuBar : public ci::Noncopyable {
-		ScopedMainMenuBar();
-		~ScopedMainMenuBar();
+	struct CI_API ScopedMenu : public ci::Noncopyable {
+		ScopedMenu(const char *label, bool enabled = true);
+		~ScopedMenu();
+		//! Returns true when menu is opened
+		explicit operator bool() const { return mOpened; }
 	protected:
 		bool mOpened;
 	};
@@ -176,5 +222,43 @@ namespace ImGui {
 	struct CI_API ScopedColumns : public ci::Noncopyable {
 		ScopedColumns( int count, const char* id = NULL, bool border = true );
 		~ScopedColumns();
+	};
+
+	struct CI_API ScopedStyleVar : public ci::Noncopyable {
+		ScopedStyleVar(ImGuiStyleVar styleVar, float val);
+		ScopedStyleVar(ImGuiStyleVar styleVar, const ImVec2& val);
+		~ScopedStyleVar();
+	};
+
+	struct CI_API ScopedItemWidth : public ci::Noncopyable {
+		ScopedItemWidth(float itemWidth);
+		~ScopedItemWidth();
+	};
+
+	struct CI_API ScopedIndent : public ci::Noncopyable {
+		ScopedIndent(float indent);
+		~ScopedIndent();
+	protected:
+		float mIndent;
+	};
+
+	/*
+	* // in setup
+	* log::makeLogger<ImGui::Logger>();
+	* 
+	* // in draw
+	* auto logger = ci::log::makeOrGetLogger<ImGui::Logger>();
+    * if(logger) logger->draw();
+	*/
+	class Logger : public ci::log::LoggerConsole
+	{
+	public:
+		Logger();
+		void setLogLevel(ci::log::Level level) { mLogLevel = level; }
+		virtual void write(const ci::log::Metadata& meta, const std::string& text) override;
+		void draw(bool *open = (bool*)0);
+
+	private:
+		ci::log::Level mLogLevel;
 	};
 }

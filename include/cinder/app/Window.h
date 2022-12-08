@@ -418,6 +418,11 @@ class CI_API Window : public std::enable_shared_from_this<Window> {
 	//! Fires the 'close' signal.
 	void				emitClose();
 
+	//! Returns the Signal emitted whenever a Window wants to close but it is prevented.
+	EventSignalWindow&	getSignalPreventedClose() { return mSignalPreventedClose; }
+	//! Fires the 'prevented close' signal.
+	void				emitPreventedClose();
+
 	EventSignalFileDrop&	getSignalFileDrop() { return mSignalFileDrop; }
 	void					emitFileDrop( FileDropEvent *event );
 
@@ -492,7 +497,7 @@ class CI_API Window : public std::enable_shared_from_this<Window> {
 	EventSignalMouse		mSignalMouseDown, mSignalMouseDrag, mSignalMouseUp, mSignalMouseWheel, mSignalMouseMove;
 	EventSignalTouch		mSignalTouchesBegan, mSignalTouchesMoved, mSignalTouchesEnded;
 	EventSignalKey			mSignalKeyDown, mSignalKeyUp;
-	EventSignalWindow		mSignalDraw, mSignalPostDraw, mSignalMove, mSignalResize, mSignalDisplayChange, mSignalClose;
+	EventSignalWindow		mSignalDraw, mSignalPostDraw, mSignalMove, mSignalResize, mSignalDisplayChange, mSignalClose, mSignalPreventedClose;
 	EventSignalFileDrop		mSignalFileDrop;
 	
 #if defined( CINDER_COCOA )

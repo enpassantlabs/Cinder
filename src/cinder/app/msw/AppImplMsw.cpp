@@ -117,25 +117,26 @@ fs::path AppImplMsw::getOpenFilePath( const fs::path &initialPath, vector<string
 		ofn.lpstrFilter = L"All\0*.*\0";
 	}
 	else {
-		size_t offset = 0;
-		
-		wcscpy( extensionStr, L"Supported Types" );
-		offset += wcslen( extensionStr ) + 1;
-		for( vector<string>::const_iterator strIt = extensions.begin(); strIt != extensions.end(); ++strIt ) {
-			wcscpy( extensionStr + offset, L"*." );
-			offset += 2;
-			wcscpy( extensionStr + offset, msw::toWideString( *strIt ).c_str() );
-			offset += strIt->length();
-			// append a semicolon to all but the last extensions
-			if( strIt + 1 != extensions.end() ) {
-				extensionStr[offset] = L';';
-				offset += 1;
-			}
-			else {
-				extensionStr[offset] = L'\0';
-				offset += 1;
+		std::string extensionsConcat;
+		for(int i = 0; i < extensions.size(); i++) {
+			const auto &str  = extensions[i];
+			extensionsConcat += "*.";
+			extensionsConcat += str;
+			if(i < extensions.size() - 1) {
+				extensionsConcat += ";";
 			}
 		}
+
+		size_t offset = 0;
+		
+		wcscpy( extensionStr, msw::toWideString(extensionsConcat).c_str() );
+		offset += wcslen( extensionStr );
+		extensionStr[offset] = 0;
+		offset += 1;
+		wcscpy( extensionStr + offset, msw::toWideString(extensionsConcat).c_str() );
+		offset += wcslen( extensionStr );
+		extensionStr[offset] = 0;
+		offset += 1;
 
 		extensionStr[offset] = 0;
 		ofn.lpstrFilter = extensionStr;
@@ -241,25 +242,26 @@ fs::path AppImplMsw::getSaveFilePath( const fs::path &initialPath, vector<string
 		ofn.lpstrFilter = L"All\0*.*\0";
 	}
 	else {
-		size_t offset = 0;
-
-		wcscpy( extensionStr, L"Supported Types" );
-		offset += wcslen( extensionStr ) + 1;
-		for( vector<string>::const_iterator strIt = extensions.begin(); strIt != extensions.end(); ++strIt ) {
-			wcscpy( extensionStr + offset, L"*." );
-			offset += 2;
-			wcscpy( extensionStr + offset, msw::toWideString( strIt->c_str() ).c_str() );
-			offset += strIt->length();
-			// append a semicolon to all but the last extensions
-			if( strIt + 1 != extensions.end() ) {
-				extensionStr[offset] = L';';
-				offset += 1;
-			}
-			else {
-				extensionStr[offset] = 0;
-				offset += 1;
+		std::string extensionsConcat;
+		for(int i = 0; i < extensions.size(); i++) {
+			const auto &str  = extensions[i];
+			extensionsConcat += "*.";
+			extensionsConcat += str;
+			if(i < extensions.size() - 1) {
+				extensionsConcat += ";";
 			}
 		}
+
+		size_t offset = 0;
+		
+		wcscpy( extensionStr, msw::toWideString(extensionsConcat).c_str() );
+		offset += wcslen( extensionStr );
+		extensionStr[offset] = 0;
+		offset += 1;
+		wcscpy( extensionStr + offset, msw::toWideString(extensionsConcat).c_str() );
+		offset += wcslen( extensionStr );
+		extensionStr[offset] = 0;
+		offset += 1;
 
 		extensionStr[offset] = 0;
 		ofn.lpstrFilter = extensionStr;
@@ -278,6 +280,11 @@ fs::path AppImplMsw::getSaveFilePath( const fs::path &initialPath, vector<string
 		wcscpy( initialPathStr, initialPath.parent_path().wstring().c_str() );
 		ofn.lpstrInitialDir = initialPathStr;
 		wcscpy( szFile, initialPath.filename().wstring().c_str() );
+	}
+
+	// set default extension
+	if(!extensions.empty()) {
+		ofn.lpstrDefExt = msw::toWideString(extensions.front()).c_str();
 	}
 	ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT;
 

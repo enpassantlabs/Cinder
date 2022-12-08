@@ -29,6 +29,7 @@ lib/winrt/x64/cinder*.lib
 *.opensdf
 Debug/
 Release/
+RelWithDebInfo/
 Debug_ANGLE/
 Release_ANGLE/
 Debug_Shared/

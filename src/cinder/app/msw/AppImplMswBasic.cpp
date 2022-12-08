@@ -181,16 +181,18 @@ WindowRef AppImplMswBasic::createWindow( Window::Format format )
 
 void AppImplMswBasic::closeWindow( WindowImplMsw *windowImpl )
 {
+	if( mWindows.size() == 1 && !mQuitOnLastWindowClosed ) {
+		windowImpl->getWindow()->emitPreventedClose();
+		return;
+	}
+	
 	auto winIt = find( mWindows.begin(), mWindows.end(), windowImpl );
 	if( winIt != mWindows.end() ) {
 		windowImpl->getWindow()->emitClose();
 		windowImpl->privateClose();
 		delete windowImpl; // this corresponds to winIt
 		mWindows.erase( winIt );
-	}
-
-	if( mWindows.empty() && mQuitOnLastWindowClosed )
-		mShouldQuit = true;
+	}	
 }
 
 size_t AppImplMswBasic::getNumWindows() const

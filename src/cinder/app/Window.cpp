@@ -292,6 +292,11 @@ void Window::emitClose()
 	mSignalClose.emit();
 }
 
+void Window::emitPreventedClose()
+{
+	mSignalPreventedClose.emit();
+}
+
 void Window::emitMove()
 {
 	applyCurrentContext();

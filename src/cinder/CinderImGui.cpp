@@ -1,5 +1,6 @@
 #include "cinder/CinderImGui.h"
 #include "imgui/imgui_impl_opengl3.h"
+#include "imgui/imgui_internal.h"
 
 #include "cinder/app/App.h"
 #include "cinder/Log.h"
@@ -17,10 +18,11 @@ static bool sTriggerNewFrame = false;
 static std::vector<int> sAccelKeys;
 static ci::signals::ConnectionList sAppConnections;
 static std::unordered_map<ci::app::WindowRef, ci::signals::ConnectionList> sWindowConnections;
+static bool sWindowJustCreated = false;
 
 namespace ImGui {
 	Options::Options()
-		: mWindow( ci::app::getWindow() ), mAutoRender( true ), mIniPath(), mSignalPriority( 1 ), mKeyboardEnabled( true ), mGamepadEnabled( true )
+		: mWindow( ci::app::getWindow() ), mAutoRender( true ), mIniPath(), mSignalPriority( 1 ), mKeyboardEnabled( true ), mGamepadEnabled( true ), mViewportsEnabled(false), mDockingEnabled(true)
 	{
 		//! Default Cinder styling
 		mStyle.Alpha = 1.0f;                            // Global alpha applies to everything in ImGui
@@ -146,6 +148,18 @@ namespace ImGui {
 		return *this;
 	}
 
+	Options& Options::enableViewports(bool enable)
+	{
+		mViewportsEnabled = enable;
+		return *this;
+	}
+
+	Options& Options::enableDocking(bool enable)
+	{
+		mDockingEnabled = enable;
+		return *this;
+	}
+
 	Options& Options::signalPriority( int signalPriority )
 	{
 		mSignalPriority = signalPriority;
@@ -162,62 +176,120 @@ namespace ImGui {
 	{
 		ImGui::PushID( int_id );
 	}
+
 	ScopedId::ScopedId( const char* label )
 	{
 		ImGui::PushID( label );
 	}
+
 	ScopedId::ScopedId( const void *ptrId )
 	{
 		ImGui::PushID( ptrId );
 	}
+
 	ScopedId::~ScopedId()
 	{
 		ImGui::PopID();
 	}
-	ScopedWindow::ScopedWindow( const char* label )
+
+	ScopedWindow::ScopedWindow(const char* label, ImGuiWindowFlags flags, bool *open) 
+		: mOpened(ImGui::Begin(label, open, flags))
 	{
-		ImGui::Begin( label );
 	}
+
 	ScopedWindow::~ScopedWindow()
 	{
 		ImGui::End();
 	}
 
-	ScopedMainMenuBar::ScopedMainMenuBar() : mOpened{ ImGui::BeginMainMenuBar() } { }
-	ScopedMainMenuBar::~ScopedMainMenuBar()
+	ScopedMenuBar::ScopedMenuBar(bool isMainMenu) 
+		: mIsMainMenu(isMainMenu)
 	{
-		if( mOpened ) ImGui::EndMainMenuBar();
+		mOpened = mIsMainMenu ? ImGui::BeginMainMenuBar() : ImGui::BeginMenuBar();
 	}
-	
-	ScopedMenuBar::ScopedMenuBar() : mOpened{ ImGui::BeginMenuBar() } { }
+
 	ScopedMenuBar::~ScopedMenuBar()
 	{
-		if( mOpened ) ImGui::EndMenuBar();
+		if (mOpened && mIsMainMenu) ImGui::EndMainMenuBar();
+		if( mOpened && !mIsMainMenu ) ImGui::EndMenuBar();
+	}
+
+	ScopedMenu::ScopedMenu(const char* label, bool enabled) 
+		: mOpened{ ImGui::BeginMenu(label, enabled) } 
+	{
+	}
+
+	ScopedMenu::~ScopedMenu()
+	{
+		if (mOpened) ImGui::EndMenu();
 	}
 
 	ScopedGroup::ScopedGroup()
 	{
 		ImGui::BeginGroup();
 	}
+	
 	ScopedGroup::~ScopedGroup()
 	{
 		ImGui::EndGroup();
 	}
+	
+	ScopedTreeNode::ScopedTreeNode(const std::string& name)
+		: mOpened(ImGui::TreeNode(name.c_str()))
+	{
+	}
+
+	ScopedTreeNode::~ScopedTreeNode()
+	{
+		if (mOpened) ImGui::TreePop();
+	}
+
+	ScopedCollapsingHeader::ScopedCollapsingHeader(const std::string& name, ImGuiTreeNodeFlags flags)
+		: mOpened(ImGui::CollapsingHeader(name.c_str(), flags))
+	{
+	}
+
+	ScopedCollapsingHeader::~ScopedCollapsingHeader()
+	{
+	}
+	
 	ScopedColumns::ScopedColumns( int count, const char* id, bool border )
 	{
 		ImGui::Columns( count, id, border );
 	}
+	
 	ScopedColumns::~ScopedColumns()
 	{
 		ImGui::NextColumn();
 	}
-	ScopedTreeNode::ScopedTreeNode( const std::string& name )
-		: mOpened( ImGui::TreeNode( name.c_str() ) )
-	{
+	
+	ScopedStyleVar::ScopedStyleVar(ImGuiStyleVar styleVar, float value) {
+		ImGui::PushStyleVar(styleVar, value);
 	}
-	ScopedTreeNode::~ScopedTreeNode()
-	{
-		if( mOpened ) ImGui::TreePop();
+
+	ScopedStyleVar::ScopedStyleVar(ImGuiStyleVar styleVar, const ImVec2 &value) {
+		ImGui::PushStyleVar(styleVar, value);
+	}
+
+	ScopedStyleVar::~ScopedStyleVar() {
+		ImGui::PopStyleVar();
+	}
+
+	ScopedItemWidth::ScopedItemWidth(float width) {
+		ImGui::PushItemWidth(width);
+	}
+
+	ScopedItemWidth::~ScopedItemWidth() {
+		ImGui::PopItemWidth();
+	}
+
+	ScopedIndent::ScopedIndent(float indent)
+		: mIndent(indent) {
+		ImGui::Indent(indent);
+	}
+
+	ScopedIndent::~ScopedIndent() {
+		ImGui::Indent(-mIndent);
 	}
 
 	bool DragFloat2( const char* label, glm::vec2* v2, float v_speed, float v_min, float v_max, const char* format, float power ) {
@@ -348,13 +420,450 @@ namespace ImGui {
 	{
 		Image( (void*)(intptr_t)texture->getId(), size, uv0, uv1, tint_col, border_col );
 	}
+
+	void PopupModal(const char* label, const char* message, std::function<void()> confirmFn, std::function<void()> cancelFn, const char* confirmLabel, const char* cancelLabel) {
+		ImGui::SetNextWindowSize(ImVec2(500, 0));
+		if (ImGui::BeginPopupModal(label, 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
+			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400);
+			ImGui::Text(message);
+			ImGui::NewLine();
+
+			if (ImGui::Button(confirmLabel, ImVec2((confirmFn || cancelFn) ? ImGui::GetWindowContentRegionWidth() / 2.0 - 5 : ImGui::GetWindowContentRegionWidth(), 0))) {
+				if (confirmFn) {
+					confirmFn();
+				}
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SetItemDefaultFocus();
+			// if no callbacks are provided we only need 1 button
+			if(confirmFn || cancelFn) {
+				ImGui::SameLine();
+				if (ImGui::Button(cancelLabel, ImVec2(ImGui::GetWindowContentRegionWidth() / 2.0 - 5, 0))) {
+					if (cancelFn) {
+						cancelFn();
+					}
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			ImGui::EndPopup();
+		}
+	}
+
+
+	/*
+	* Logger
+	*/
+	// Usage:
+//  static ExampleAppLog my_log;
+//  my_log.AddLog("Hello %d world\n", 123);
+//  my_log.Draw("title");
+	struct ExampleAppLog
+	{
+		ImGuiTextBuffer     Buf;
+		ImGuiTextFilter     Filter;
+		ImVector<int>       LineOffsets; // Index to lines offset. We maintain this with AddLog() calls.
+		bool                AutoScroll;  // Keep scrolling if already at the bottom.
+		bool				NewLog;		// did we get a new log and not autoscroll yet?
+
+		ExampleAppLog()
+		{
+			AutoScroll = true;
+			NewLog = false;
+			Clear();
+		}
+
+		void    Clear()
+		{
+			Buf.clear();
+			LineOffsets.clear();
+			LineOffsets.push_back(0);
+		}
+
+		void    AddLog(const char* fmt, ...) IM_FMTARGS(2)
+		{
+			int old_size = Buf.size();
+			va_list args;
+			va_start(args, fmt);
+			Buf.appendfv(fmt, args);
+			va_end(args);
+			for (int new_size = Buf.size(); old_size < new_size; old_size++)
+				if (Buf[old_size] == '\n')
+					LineOffsets.push_back(old_size + 1);
+
+			NewLog = true;
+		}
+
+		void    Draw(const char* title, bool* p_open = NULL)
+		{
+			if (!ImGui::Begin(title, p_open))
+			{
+				ImGui::End();
+				return;
+			}
+
+			// Auto scroll
+			ImGui::Checkbox("Auto-scroll", &AutoScroll);			
+			ImGui::SameLine();
+
+			// Main window
+			bool clear = ImGui::Button("Clear");
+			ImGui::SameLine();
+			bool copy = ImGui::Button("Copy");
+			ImGui::SameLine();
+			Filter.Draw("Filter", -100.0f);
+
+			ImGui::Separator();
+			ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+			if (clear)
+				Clear();
+			if (copy)
+				ImGui::LogToClipboard();
+
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+			const char* buf = Buf.begin();
+			const char* buf_end = Buf.end();
+			if (Filter.IsActive())
+			{
+				// In this example we don't use the clipper when Filter is enabled.
+				// This is because we don't have a random access on the result on our filter.
+				// A real application processing logs with ten of thousands of entries may want to store the result of
+				// search/filter.. especially if the filtering function is not trivial (e.g. reg-exp).
+				for (int line_no = 0; line_no < LineOffsets.Size; line_no++)
+				{
+					const char* line_start = buf + LineOffsets[line_no];
+					const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
+					if (Filter.PassFilter(line_start, line_end))
+						ImGui::TextUnformatted(line_start, line_end);
+				}
+			}
+			else
+			{
+				// The simplest and easy way to display the entire buffer:
+				//   ImGui::TextUnformatted(buf_begin, buf_end);
+				// And it'll just work. TextUnformatted() has specialization for large blob of text and will fast-forward
+				// to skip non-visible lines. Here we instead demonstrate using the clipper to only process lines that are
+				// within the visible area.
+				// If you have tens of thousands of items and their processing cost is non-negligible, coarse clipping them
+				// on your side is recommended. Using ImGuiListClipper requires
+				// - A) random access into your data
+				// - B) items all being the  same height,
+				// both of which we can handle since we an array pointing to the beginning of each line of text.
+				// When using the filter (in the block of code above) we don't have random access into the data to display
+				// anymore, which is why we don't use the clipper. Storing or skimming through the search result would make
+				// it possible (and would be recommended if you want to search through tens of thousands of entries).
+				ImGuiListClipper clipper;
+				clipper.Begin(LineOffsets.Size);
+				while (clipper.Step())
+				{
+					for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++)
+					{
+						const char* line_start = buf + LineOffsets[line_no];
+						const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
+						ImGui::TextUnformatted(line_start, line_end);
+					}
+				}
+				clipper.End();
+			}
+			ImGui::PopStyleVar();
+
+			if (copy)
+				ImGui::LogFinish();
+
+			if (AutoScroll && NewLog) {
+				ImGui::SetScrollHereY(1.0f);
+				NewLog = false;
+			}
+
+			ImGui::EndChild();
+			ImGui::End();
+		}
+	};
+
+	const std::string getCurrentDateTimeString()
+	{
+		time_t timeSinceEpoch = time( NULL );
+		struct tm *now = localtime( &timeSinceEpoch );
+
+		char result[100];
+		strftime( result, sizeof( result ), "%Y-%m-%d.%X", now );
+
+		return result;
+	}
+
+	static ExampleAppLog log;
+
+	Logger::Logger() : mLogLevel(ci::log::LEVEL_DEBUG)
+	{
+	}
+
+	void Logger::write(const ci::log::Metadata& meta, const std::string& text)
+	{
+		
+		if (meta.mLevel >= mLogLevel) {
+			if(isTimestampEnabled()) {
+				log.AddLog("%s   %s : %s\n", getCurrentDateTimeString().c_str(), meta.toString().c_str(), text.c_str());
+			}
+			else {
+				log.AddLog("%s : %s\n", meta.toString().c_str(), text.c_str());
+			}
+		}
+	}
+
+	void Logger::draw(bool *open)
+	{
+		log.Draw("Log", open);
+	}
 }
 
+struct ImGuiViewportDataCinder
+{
+	ci::app::WindowRef window;
+	ci::app::Window::Format format;
+
+	ImGuiViewportDataCinder() { window = nullptr; }
+	~ImGuiViewportDataCinder() { IM_ASSERT(window == nullptr); }
+};
+
+
+static void ImGui_ImplCinder_WindowCloseCallback(ci::app::WindowRef window) {
+	if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.get())) {
+		viewport->PlatformRequestClose = true;
+	}
+}
+
+static void ImGui_ImplCinder_WindowPosCallback(ci::app::WindowRef window, int x, int y)
+{
+	if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.get()))
+	{
+		viewport->PlatformRequestMove = true;
+	}
+}
+
+static void ImGui_ImplCinder_WindowSizeCallback(ci::app::WindowRef window, int w, int h)
+{
+	if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.get()))
+	{
+		viewport->PlatformRequestResize = true;
+	}
+}
+
+static void ImGui_ImplCinder_MouseDown(ci::app::MouseEvent& event);
+static void ImGui_ImplCinder_MouseUp(ci::app::MouseEvent& event);
+static void ImGui_ImplCinder_MouseMove(ci::app::MouseEvent& event);
+static void ImGui_ImplCinder_MouseDrag(ci::app::MouseEvent& event);
+static void ImGui_ImplCinder_MouseWheel(ci::app::MouseEvent& event);
+static void ImGui_ImplCinder_KeyDown(ci::app::KeyEvent& event);
+static void ImGui_ImplCinder_KeyUp(ci::app::KeyEvent& event);
+
+static void ImGui_ImplCinder_CreateWindow(ImGuiViewport* viewport)
+{
+	// we use this to ignore the mouseup event generated by the main window when it loses focus
+	// we only want to ignore this if the mouse keys are down
+	ImGuiIO& io = ImGui::GetIO();
+	sWindowJustCreated = io.MouseDown[0];
+
+	ImGuiViewportDataCinder* data = IM_NEW(ImGuiViewportDataCinder)();
+	viewport->PlatformUserData = data;
+
+	// create format
+	data->format = ci::app::Window::Format().pos(viewport->Pos).size(viewport->Size).borderless();
+
+	// create window
+	auto window = ci::app::App::get()->createWindow(data->format);
+	sWindowConnections[window] += window->getSignalClose().connect([window]() {
+		ImGui_ImplCinder_WindowCloseCallback(window);
+		});
+
+	sWindowConnections[window] += window->getSignalMove().connect([window]() {
+		ImGui_ImplCinder_WindowPosCallback(window, window->getPos().x, window->getPos().y);
+		});
+
+	sWindowConnections[window] += window->getSignalResize().connect([window]() {
+		ImGui_ImplCinder_WindowSizeCallback(window, window->getSize().x, window->getSize().y);
+		});
+
+	sWindowConnections[window] += window->getSignalMouseDown().connect(ImGui_ImplCinder_MouseDown);
+	sWindowConnections[window] += window->getSignalMouseUp().connect(ImGui_ImplCinder_MouseUp);
+	sWindowConnections[window] += window->getSignalMouseMove().connect(ImGui_ImplCinder_MouseMove);
+	sWindowConnections[window] += window->getSignalMouseDrag().connect(ImGui_ImplCinder_MouseDrag);
+	sWindowConnections[window] += window->getSignalMouseWheel().connect(ImGui_ImplCinder_MouseWheel);
+	sWindowConnections[window] += window->getSignalKeyDown().connect(ImGui_ImplCinder_KeyDown);
+	sWindowConnections[window] += window->getSignalKeyUp().connect(ImGui_ImplCinder_KeyUp);
+
+	data->window = window;
+	viewport->PlatformRequestResize = false;
+	viewport->PlatformHandle = window.get();
+	viewport->PlatformHandleRaw = window->getNative();
+
+	window->getRenderer()->makeCurrentContext();
+}
+
+static void ImGui_ImplCinder_DestroyWindow(ImGuiViewport* viewport)
+{
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData)
+	{
+		if (data->window) {
+			sWindowConnections.erase(data->window);
+			if (!ci::app::App::get()->getQuitRequested()) {
+				data->window->close();
+			}
+			data->window = nullptr;
+		}
+		IM_DELETE(data);
+
+		viewport->PlatformUserData = nullptr;
+		viewport->PlatformHandle = nullptr;
+		viewport->PlatformHandleRaw = nullptr;
+	}
+}
+
+static void ImGui_ImplCinder_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos)
+{
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData)
+	{
+		if (data->window) {
+			data->window->setPos(pos);
+		}
+	}
+}
+
+static ImVec2 ImGui_ImplCinder_GetWindowPos(ImGuiViewport* viewport)
+{
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData)
+	{
+		IM_ASSERT(data->window != 0);
+		return data->window->getPos();
+	}
+
+	return ImVec2();
+}
+
+static void ImGui_ImplCinder_SetWindowSize(ImGuiViewport* viewport, ImVec2 size)
+{
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData)
+	{
+		if (data->window) {
+			data->window->setSize(size);
+		}
+	}
+}
+
+static ImVec2 ImGui_ImplCinder_GetWindowSize(ImGuiViewport* viewport)
+{
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData)
+	{
+		IM_ASSERT(data->window != 0);
+		return data->window->getSize();
+	}
+
+	return ImVec2();
+}
+
+static float ImGui_ImplCinder_GetWindowDpiScale(ImGuiViewport* viewport)
+{
+	ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData;
+	IM_ASSERT(data->window != 0);
+	auto display = data->window->getDisplay();
+	return display->getContentScale();
+}
+
+static void ImGui_ImplCinder_SetWindowTitle(ImGuiViewport* viewport, const char* title)
+{
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData) {
+		if (data->window) {
+			data->window->setTitle(title);
+		}
+	}
+}
+
+static void ImGui_ImplCinder_UpdateWindow(ImGuiViewport* viewport)
+{
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData) {
+		IM_ASSERT(data->window != 0);
+
+		data->format = ci::app::Window::Format().pos(viewport->Pos).size(viewport->Size);
+		if (data->window->getPos() != data->format.getPos()) {
+			data->window->setPos(data->format.getPos());
+			viewport->PlatformRequestMove = true;
+		}
+		if (data->window->getSize() != data->format.getSize()) {
+			data->window->setSize(data->format.getSize());
+			viewport->PlatformRequestResize = true;
+		}
+	}
+}
+
+static void ImGui_ImplCinder_ShowWindow(ImGuiViewport* viewport)
+{
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData) {
+		if (data->window) {
+			data->window->show();
+		}
+	}
+}
+
+static void ImGui_ImplCinder_RenderWindow(ImGuiViewport* viewport, void*) {
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData) {
+		if (data->window) {
+			data->window->getRenderer()->makeCurrentContext();
+		}
+	}
+}
+
+static void ImGui_ImplCinder_SwapBuffers(ImGuiViewport* viewport, void*) {
+	return;
+
+	if (ImGuiViewportDataCinder* data = (ImGuiViewportDataCinder*)viewport->PlatformUserData) {
+		if (data->window) {
+			data->window->getRenderer()->makeCurrentContext();
+			data->window->getRenderer()->swapBuffers();
+		}
+	}
+}
+
+static void ImGui_ImplCinder_UpdateMonitors()
+{
+	ImGui::GetPlatformIO().Monitors.resize(0);
+	auto displays = ci::Display::getDisplays();
+	for (auto d : displays) {
+		ImGuiPlatformMonitor imgui_monitor;
+		auto b = d->getBounds();
+		imgui_monitor.MainPos = ImVec2((float)b.x1, (float)b.y1);
+		imgui_monitor.MainSize = ImVec2((float)(b.getWidth()), (float)(b.getHeight()));
+		imgui_monitor.WorkPos = imgui_monitor.MainPos;
+		imgui_monitor.WorkSize = imgui_monitor.MainSize;
+		imgui_monitor.DpiScale = d->getContentScale();
+		ImGuiPlatformIO& io = ImGui::GetPlatformIO();
+		io.Monitors.push_back(imgui_monitor);
+	}
+}
+
+static void ImGui_ImplCinder_InitPlatformInterface() {
+	ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+
+	platform_io.Platform_CreateWindow = ImGui_ImplCinder_CreateWindow;
+	platform_io.Platform_DestroyWindow = ImGui_ImplCinder_DestroyWindow;
+	platform_io.Platform_ShowWindow = ImGui_ImplCinder_ShowWindow;
+	platform_io.Platform_SetWindowPos = ImGui_ImplCinder_SetWindowPos;
+	platform_io.Platform_GetWindowPos = ImGui_ImplCinder_GetWindowPos;
+	platform_io.Platform_SetWindowSize = ImGui_ImplCinder_SetWindowSize;
+	platform_io.Platform_GetWindowSize = ImGui_ImplCinder_GetWindowSize;
+	platform_io.Platform_GetWindowDpiScale = ImGui_ImplCinder_GetWindowDpiScale;
+	platform_io.Platform_UpdateWindow = ImGui_ImplCinder_UpdateWindow;
+	platform_io.Platform_SetWindowTitle = ImGui_ImplCinder_SetWindowTitle;
+	platform_io.Platform_RenderWindow = ImGui_ImplCinder_RenderWindow;
+	platform_io.Platform_SwapBuffers = ImGui_ImplCinder_SwapBuffers;
+}
 
 static void ImGui_ImplCinder_MouseDown( ci::app::MouseEvent& event )
 {
 	ImGuiIO& io = ImGui::GetIO();
-	io.MousePos = event.getWindow()->toPixels( event.getPos() );
+	glm::vec2 pos = ci::app::toPixels( event.getPos() );
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+		pos += event.getWindow()->getPos();
+	}
+	io.MousePos = pos;
 	io.MouseDown[0] = event.isLeftDown();
 	io.MouseDown[1] = event.isRightDown();
 	io.MouseDown[2] = event.isMiddleDown();
@@ -362,10 +871,16 @@ static void ImGui_ImplCinder_MouseDown( ci::app::MouseEvent& event )
 }
 static void ImGui_ImplCinder_MouseUp( ci::app::MouseEvent& event )
 {
-	ImGuiIO& io = ImGui::GetIO();
-	io.MouseDown[0] = false;
-	io.MouseDown[1] = false;
-	io.MouseDown[2] = false;
+	// we ignore mouseup events generated by the main window losing focus if a new window is spawned
+	if (!sWindowJustCreated) {
+		ImGuiIO& io = ImGui::GetIO();
+		io.MouseDown[0] = false;
+		io.MouseDown[1] = false;
+		io.MouseDown[2] = false;
+	}
+	else {
+		sWindowJustCreated = false;
+	}
 }
 static void ImGui_ImplCinder_MouseWheel( ci::app::MouseEvent& event )
 {
@@ -377,14 +892,23 @@ static void ImGui_ImplCinder_MouseWheel( ci::app::MouseEvent& event )
 static void ImGui_ImplCinder_MouseMove( ci::app::MouseEvent& event )
 {
 	ImGuiIO& io = ImGui::GetIO();
-	io.MousePos = event.getWindow()->toPixels( event.getPos() );
+	glm::vec2 pos = ci::app::toPixels(event.getPos());
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+		pos += event.getWindow()->getPos();
+	}
+	io.MousePos = pos;
 	event.setHandled( io.WantCaptureMouse );
 }
+
 //! sets the right mouseDrag IO values in imgui
 static void ImGui_ImplCinder_MouseDrag( ci::app::MouseEvent& event )
 {
 	ImGuiIO& io = ImGui::GetIO();
-	io.MousePos = event.getWindow()->toPixels( event.getPos() );
+	glm::vec2 pos = ci::app::toPixels(event.getPos());
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+		pos += event.getWindow()->getPos();
+	}
+	io.MousePos = pos;
 	event.setHandled( io.WantCaptureMouse );
 }
 
@@ -415,7 +939,7 @@ static void ImGui_ImplCinder_KeyDown( ci::app::KeyEvent& event )
 	io.KeyAlt = event.isAltDown();
 	io.KeySuper = event.isMetaDown();
 
-	event.setHandled( io.WantCaptureKeyboard );
+	event.setHandled( io.WantTextInput );
 }
 
 static void ImGui_ImplCinder_KeyUp( ci::app::KeyEvent& event )
@@ -434,7 +958,7 @@ static void ImGui_ImplCinder_KeyUp( ci::app::KeyEvent& event )
 	io.KeyAlt = event.isAltDown();
 	io.KeySuper = event.isMetaDown();
 
-	event.setHandled( io.WantCaptureKeyboard );
+	event.setHandled( io.WantTextInput );
 }
 
 static void ImGui_ImplCinder_NewFrameGuard( const ci::app::WindowRef& window );
@@ -447,6 +971,10 @@ static void ImGui_ImplCinder_Resize( const ci::app::WindowRef& window )
 	ImGui_ImplCinder_NewFrameGuard( window );
 }
 
+static void ImGui_ImplCinder_Move() {
+	ImGui_ImplCinder_NewFrameGuard(ci::app::getWindow());
+}
+
 static void ImGui_ImplCinder_NewFrameGuard( const ci::app::WindowRef& window ) {
 	if( ! sTriggerNewFrame )
 		return;
@@ -457,7 +985,8 @@ static void ImGui_ImplCinder_NewFrameGuard( const ci::app::WindowRef& window ) {
 	IM_ASSERT( io.Fonts->IsBuilt() ); // Font atlas needs to be built, call renderer _NewFrame() function e.g. ImGui_ImplOpenGL3_NewFrame() 
 
 	// Setup display size
-	io.DisplaySize = window->toPixels( window->getSize() );
+	//io.DisplaySize = window->toPixels( window->getSize() );
+	//io.DisplaySize = ci::app::toPixels( window->getSize() );
 
 	// Setup time step
 	static double g_Time = 0.0f;
@@ -473,7 +1002,18 @@ static void ImGui_ImplCinder_NewFrameGuard( const ci::app::WindowRef& window ) {
 static void ImGui_ImplCinder_PostDraw()
 {
 	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+	
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		auto ctx = ci::gl::context();
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+		ctx->makeCurrent();
+	}
+
 	sTriggerNewFrame = true;
 }
 
@@ -482,6 +1022,7 @@ static bool ImGui_ImplCinder_Init( const ci::app::WindowRef& window, const ImGui
 	// Setup back-end capabilities flags
 	ImGuiIO& io = ImGui::GetIO();
 	io.BackendPlatformName = "imgui_impl_cinder";
+	if(options.isViewportsEnabled()) io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
 
 	// Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
 	io.KeyMap[ImGuiKey_Tab] = ci::app::KeyEvent::KEY_TAB;
@@ -529,6 +1070,7 @@ static bool ImGui_ImplCinder_Init( const ci::app::WindowRef& window, const ImGui
 	sWindowConnections[window] += window->getSignalKeyDown().connect( signalPriority, ImGui_ImplCinder_KeyDown );
 	sWindowConnections[window] += window->getSignalKeyUp().connect( signalPriority, ImGui_ImplCinder_KeyUp );
 	sWindowConnections[window] += window->getSignalResize().connect( signalPriority, std::bind( ImGui_ImplCinder_Resize, window ) );
+	sWindowConnections[window] += window->getSignalMove().connect(signalPriority, ImGui_ImplCinder_Move);
 	if( options.isAutoRenderEnabled() ) {
 		sWindowConnections[window] += ci::app::App::get()->getSignalUpdate().connect( std::bind( ImGui_ImplCinder_NewFrameGuard, window ) );
 		sWindowConnections[window] += window->getSignalPostDraw().connect( ImGui_ImplCinder_PostDraw );
@@ -537,7 +1079,23 @@ static bool ImGui_ImplCinder_Init( const ci::app::WindowRef& window, const ImGui
 	sWindowConnections[window] += window->getSignalClose().connect( [=] {
 		sWindowConnections.erase( window );
 		sTriggerNewFrame = false;
+		ci::app::App::get()->quit();
+		ci::app::App::get()->setQuitRequested();
 	} );
+
+	if(options.isViewportsEnabled()) {
+		// Register main window handle (which is owned by the main application, not by us)
+		// This is mostly for simplicity and consistency, so that our code (e.g. mouse handling etc.) can use same logic for main and secondary viewports.
+		ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+		ImGuiViewportDataCinder* data = IM_NEW(ImGuiViewportDataCinder)();
+		data->window = window;
+		main_viewport->PlatformUserData = data;
+		main_viewport->PlatformHandle = (void*)data->window.get();
+		main_viewport->PlatformHandleRaw = data->window->getNative();
+
+		ImGui_ImplCinder_UpdateMonitors();
+		ImGui_ImplCinder_InitPlatformInterface();
+	}
 
 	return true;
 }
@@ -558,6 +1116,9 @@ bool ImGui::Initialize( const ImGui::Options& options )
 	ImGuiIO& io = ImGui::GetIO();
 	if( options.isKeyboardEnabled() ) io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	if( options.isGamepadEnabled() ) io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls	
+	if (options.isDockingEnabled()) io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	if (options.isViewportsEnabled()) io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
 	ci::app::WindowRef window = options.getWindow();
 	io.DisplaySize = ci::vec2( window->toPixels( window->getSize() ) );
 	io.DeltaTime = 1.0f / 60.0f;
@@ -592,4 +1153,8 @@ bool ImGui::Initialize( const ImGui::Options& options )
 
 	sInitialized = true;
 	return sInitialized;
+}
+
+void ImGui::NewFrameGuard() {
+	ImGui_ImplCinder_NewFrameGuard(ci::app::getWindow());
 }
